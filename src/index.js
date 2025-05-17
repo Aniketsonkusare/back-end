@@ -1,12 +1,25 @@
-import dotenv from 'dotenv';
-import connectDB from './db/index.js';
+import dotenv from "dotenv";
+import connectDB from "./db/index.js";
+import express from "express";
 
 dotenv.config({
-    path: './env'
-})
+  path: "./env",
+});
+
+const app = express();
 
 connectDB()
-
+  .then(() => {
+    app.on("error", (error) => {
+      console.log("Error: ", error);
+    });
+    app.listen(process.env.PORT || 3000, () => {
+      console.log(`App listening this Port ${process.env.PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.log(`MongoDB Error `, error);
+  });
 
 // (async () => {
 //   try {
@@ -21,4 +34,4 @@ connectDB()
 //     console.log(`Error listening port ${error}`);
 //     throw error;
 //   }
-// })(); 
+// })();
