@@ -164,17 +164,19 @@ const loginUsers = asyncHandler(async (req, res) => {
 });
 
 const logOutUser = asyncHandler(async (req, res) => {
-  await User.findByIdAndUpdate(
+  const updatedUser = await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1, // this removes the fields of documents
       },
     },
     {
       new: true,
     }
   );
+
+  console.log("After logout →", updatedUser);
   const options = {
     httpOnly: true,
     secure: true,
@@ -188,7 +190,8 @@ const logOutUser = asyncHandler(async (req, res) => {
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incomingRefreshToken = req.cookie.refreshToken || req.body.refreshToken;
+  const incomingRefreshToken =
+    req.cookies?.refreshToken || req.body.refreshToken;
   console.log(incomingRefreshToken, "incomingRefreshToken");
   if (!incomingRefreshToken) {
     throw new ApiError(401, "unauthorized Request");
@@ -236,6 +239,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const {oldPassword, newPassword} = req.body;
+  console.log("req.body ===>", req.body);
   const user = await User.findById(req?.user?._id);
   const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
   if (!isPasswordCorrect) {
@@ -321,7 +325,7 @@ const getUsersChannleProfile = asyncHandler(async (req, res) => {
   const {username} = req.params;
 
   if (!username?.trim()) {
-    throw ApiError(400, "username is missing");
+    throw new ApiError(400, "username is missing");
   }
 
   const channle = await User.aggregate([
@@ -423,7 +427,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
           {
             $addFields: {
               owner: {
-                $first: "owner",
+                $first: "$owner",
               },
             },
           },
